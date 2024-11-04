@@ -1,61 +1,103 @@
 import bcrypt from "bcryptjs";
-import pool from "../config/db";
-import { Request, Response } from "express";
+import User from "../models/User";
+import { Request, Response, RequestHandler } from "express";
 import { generateTokens } from "../helper";
 import jwt from "jsonwebtoken";
+import { userType } from "../types/userType";
 
 // Register user
-const register = async (req: Request, res: Response) => {
-  const { username, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
+const register: RequestHandler = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const userData = req.body;
+
+  // Trim email to avoid spaces affecting uniqueness
+  const email = userData.email.trim().toLowerCase();
+  const hashedPassword = await bcrypt.hash(userData.password, 10);
 
   try {
-    const result = await pool.query(
-      "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING *",
-      [username, hashedPassword]
-    );
-    const user = result.rows[0];
+    // Check if user with email already exists
+    const userExists = await User.findOne({ where: { email } });
+    if (userExists) {
+      res.status(400).json({
+        error: "User with this email already exists",
+      });
+      return;
+    }
 
-    // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(user.id);
+    // Create user
+    const result = await User.create({
+      ...userData,
+      email,
+      password: hashedPassword,
+    });
 
-    // Save refresh token in database
-    await pool.query("UPDATE users SET refresh_token = $1 WHERE id = $2", [
-      refreshToken,
-      user.id,
-    ]);
+    // Prepare user data for response (omit password)
+    const user = result.get({ plain: true });
+    delete user.password;
 
-    res.status(201).json({ user, accessToken, refreshToken });
+    res.status(201).json({ message: "User created successfully", user });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    res
+      .status(500)
+      .json({ error: "An error occurred while creating the user" });
   }
 };
 
 // Login user
-const login = async (req: Request, res: Response) => {
-  const { username, password } = req.body;
+const login: RequestHandler = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { email, password } = req.body;
 
   try {
-    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
-      username,
-    ]);
-    const user = result.rows[0];
+    const user = await User.findOne({ where: { email } });
 
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const { accessToken, refreshToken } = generateTokens(user.id);
-
-      // Update refresh token in the database
-      await pool.query("UPDATE users SET refresh_token = $1 WHERE id = $2", [
-        refreshToken,
-        user.id,
-      ]);
-
-      res.json({ message: "Login successful", accessToken, refreshToken });
-    } else {
-      res.status(401).json({ error: "Invalid username or password" });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
     }
+
+    // Compare password
+    const passwordMatch = await bcrypt.compare(
+      password,
+      user.getDataValue("password")
+    );
+
+    if (!passwordMatch) {
+      res.status(401).json({ error: "Invalid credentials" });
+      return;
+    }
+
+    // Prepare user data for response (omit password)
+    const userData = user.get({ plain: true });
+    delete userData.password;
+
+    const userForToken: userType = {
+      id: userData.id,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+    };
+
+    const { accessToken, refreshToken } = generateTokens(userForToken);
+
+    // Update refresh token in the database
+    const result = await User.update(
+      { refresh_token: refreshToken },
+      { where: { id: user.id } }
+    );
+
+    if (!result) {
+      res.status(500).json({ error: "An error occurred while logging in" });
+      return;
+    }
+
+    res.json({ message: "Login successful", accessToken, refreshToken });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(400).json({ error: error.message });
   }
 };
 
@@ -64,26 +106,31 @@ const socialLogin = async (req: Request, res: Response) => {
   const { email, name } = req.body;
 
   try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
-    
-    let user = result.rows[0];
+    const result = await User.findOrCreate({
+      where: { email },
+      defaults: { name, email },
+    });
 
-    if (!user) {
-      const newUserResult = await pool.query(
-        "INSERT INTO users (email, name) VALUES ($1, $2) RETURNING *",
-        [email, name]
-      );
-      user = newUserResult.rows[0];
+    let [user, created] = result;
+    if (user) {
+      user = user.get({ plain: true });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user.id);
+    if (!user) {
+      const newUserResult = await User.create({ name, email });
+      user = newUserResult.get({ plain: true });
+    }
 
-    await pool.query("UPDATE users SET refresh_token = $1 WHERE id = $2", [
-      refreshToken,
-      user.id,
-    ]);
+    const userForToken: userType = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+
+    const { accessToken, refreshToken } = generateTokens(userForToken);
+
+    await User.update({ refreshToken }, { where: { id: user.id } });
 
     res.json({ message: "Login successful", accessToken, refreshToken });
   } catch (error: any) {
@@ -92,10 +139,13 @@ const socialLogin = async (req: Request, res: Response) => {
 };
 
 // Refresh token
-const refreshToken = async (req: Request, res: Response) => {
+const refreshToken: RequestHandler = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { refreshToken } = req.body;
   if (!refreshToken)
-    return res.status(401).json({ message: "Refresh token required" });
+    res.status(401).json({ message: "Refresh token required" });
 
   try {
     const payload: any = jwt.verify(
@@ -104,26 +154,22 @@ const refreshToken = async (req: Request, res: Response) => {
     );
 
     // Verify that refresh token matches the one stored in the database
-    const result = await pool.query(
-      "SELECT refresh_token FROM users WHERE id = $1",
-      [payload.userId]
-    );
-    const storedToken = result.rows[0]?.refresh_token;
+    const result = await User.findByPk(payload.id);
+    const storedToken = result?.getDataValue("refreshToken");
 
     if (storedToken !== refreshToken) {
-      return res.status(403).json({ message: "Invalid refresh token" });
+      res.status(403).json({ message: "Invalid refresh token" });
     }
 
     // Generate new access token (and optionally a new refresh token)
-    const { accessToken, refreshToken: newRefreshToken } = generateTokens(
-      payload.userId
-    );
+    const { accessToken, refreshToken: newRefreshToken } =
+      generateTokens(payload);
 
     // Update the new refresh token in the database
-    await pool.query("UPDATE users SET refresh_token = $1 WHERE id = $2", [
-      newRefreshToken,
-      payload.userId,
-    ]);
+    await User.update(
+      { refreshToken: newRefreshToken },
+      { where: { id: payload.id } }
+    );
 
     res.json({ accessToken, refreshToken: newRefreshToken });
   } catch (error) {

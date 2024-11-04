@@ -1,10 +1,8 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes";
-import { authenticateToken } from "./middleware/auth";
-
-dotenv.config();
+import userRouter from "./routes/userRoutes";
+import emailVerifyRoutes from "./routes/emailVerifyRoutes";
 
 const app = express();
 app.use(
@@ -15,7 +13,9 @@ app.use(
 );
 
 app.use(express.json());
-app.use("/api/auth", authRoutes);
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRouter);
+app.use("/api/v1/email", emailVerifyRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Express Server with TypeScript 🚀⚡✨");
