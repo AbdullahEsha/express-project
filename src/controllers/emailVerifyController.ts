@@ -37,7 +37,12 @@ const resetPassword: RequestHandler = async (
       return;
     }
 
-    const { accessToken, refreshToken } = generateTokens(user);
+    const { accessToken, refreshToken } = generateTokens({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
 
     // Update refresh token in the database
     await User.update(
@@ -53,6 +58,7 @@ const resetPassword: RequestHandler = async (
     const emailContent = await ejs.renderFile(templatePath, {
       name: user.name,
       resetPasswordLink,
+      token: accessToken,
     });
 
     // Send email with reset password link
@@ -60,7 +66,7 @@ const resetPassword: RequestHandler = async (
       from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_ADDRESS}>`,
       to: email,
       subject: "Reset Your Password",
-      html: emailContent, // emailContent from your ejs template
+      html: emailContent,
     });
 
     res.json({ message: "Reset password link sent to your email" });

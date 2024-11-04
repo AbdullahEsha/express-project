@@ -10,10 +10,13 @@
     <p>Hi <%= name %>,</p>
     <p>
       We received a request to reset your password. You can reset your password
-      by clicking the link below:
+      by clicking the link below within the next 15 minutes.
     </p>
     <a href="<%= resetPasswordLink %>">Reset Password</a>
     <p>If you did not request this, please ignore this email.</p>
     <p>Thank you!</p>
+
+    <h4>You can also use the following token to reset your password:</h4>
+    <p><%= token %></p>
   </body>
 </html>

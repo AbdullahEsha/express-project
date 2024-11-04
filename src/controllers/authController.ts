@@ -106,33 +106,45 @@ const socialLogin = async (req: Request, res: Response) => {
   const { email, name } = req.body;
 
   try {
-    const result = await User.findOrCreate({
-      where: { email },
-      defaults: { name, email },
-    });
+    const result = await User.findOne({ where: { email } });
 
-    let [user, created] = result;
-    if (user) {
-      user = user.get({ plain: true });
+    if (!result) {
+      const password = Math.random().toString(36).substring(7);
+      const user = await User.create({
+        email,
+        name,
+        password: await bcrypt.hash(password, 10),
+        role: "user",
+      });
+
+      const userForToken: userType = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      };
+
+      const { accessToken, refreshToken } = generateTokens(userForToken);
+
+      await User.update({ refreshToken }, { where: { id: user.id } });
+
+      res.json({ message: "Login successful", accessToken, refreshToken });
+    } else {
+      const userForToken: userType = {
+        id: result.id,
+        name: result.name,
+        email: result.email,
+        role: result.role,
+      };
+
+      const { accessToken, refreshToken } = generateTokens(userForToken);
+
+      await User.update({ refreshToken }, { where: { id: result.id } });
+
+      res.json({ message: "Login successful", accessToken, refreshToken });
     }
 
-    if (!user) {
-      const newUserResult = await User.create({ name, email });
-      user = newUserResult.get({ plain: true });
-    }
-
-    const userForToken: userType = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    };
-
-    const { accessToken, refreshToken } = generateTokens(userForToken);
-
-    await User.update({ refreshToken }, { where: { id: user.id } });
-
-    res.json({ message: "Login successful", accessToken, refreshToken });
+    res.json({ message: "Social login successful" });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
