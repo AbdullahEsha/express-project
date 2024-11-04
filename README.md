@@ -11,7 +11,7 @@ To install the project, follow these steps:
 
 ## Step by Step Process
 
-- PG & Sequelize(`npm i pg sequelize`): The project uses PostgreSQL (PG) as its database, managed with Sequelize, an ORM for Node.js. Created User Model and Established the DB connection with the project. Sequelize helps streamline data operations by providing an easy-to-use syntax for interacting with PostgreSQL tables and performing CRUD (Create, Read, Update, Delete) operations.
+- PG & Sequelize (`npm i pg sequelize`): The project uses PostgreSQL (PG) as its database, managed with Sequelize, an ORM for Node.js. Created User Model and Established the DB connection with the project. Sequelize helps streamline data operations by providing an easy-to-use syntax for interacting with PostgreSQL tables and performing CRUD (Create, Read, Update, Delete) operations.
 
 - JWT & Bcryptjs (`npm i jsonwebtoken bcryptjs`): JSON Web Tokens (JWT) are used for authentication, ensuring secure communication by encoding user credentials. Bcryptjs is used to hash passwords, protecting sensitive user data by storing encrypted versions of passwords instead of plain text.
 
@@ -38,3 +38,6 @@ The following API endpoints are available:
 | `/api/v1/email/reset-password`        | POST   | Create link and send it through email.               |
 | `/api/v1/email/reset-password/:token` | POST   | Verify token and update password provided in body.   |
 | `/api/v1/auth/social-login`           | POST   | Register and login without password                  |
+| `/api/v1/auth/refresh-token`          | POST   | To refresh the access token                          |
+
+## Post man <a href="https://api.postman.com/collections/20303604-9d68db5e-d64a-48b2-ab96-4cf146c9016c?access_key=PMAT-01JBVDXP4HDVE3N1X2971FW9Q9">Go to link</a>
