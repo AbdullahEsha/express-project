@@ -126,7 +126,10 @@ const socialLogin = async (req: Request, res: Response) => {
 
       const { accessToken, refreshToken } = generateTokens(userForToken);
 
-      await User.update({ refreshToken }, { where: { id: user.id } });
+      await User.update(
+        { refresh_token: refreshToken },
+        { where: { id: user.id } }
+      );
 
       res.json({ message: "Login successful", accessToken, refreshToken });
     } else {
@@ -139,12 +142,13 @@ const socialLogin = async (req: Request, res: Response) => {
 
       const { accessToken, refreshToken } = generateTokens(userForToken);
 
-      await User.update({ refreshToken }, { where: { id: result.id } });
+      await User.update(
+        { refresh_token: refreshToken },
+        { where: { id: result.id } }
+      );
 
       res.json({ message: "Login successful", accessToken, refreshToken });
     }
-
-    res.json({ message: "Social login successful" });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
