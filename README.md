@@ -137,7 +137,33 @@ Copy code
     Copy code
 
 ```javascript
-const nodemailer = require('nodemailer'); const ejs = require('ejs');  const transporter = nodemailer.createTransport({   service: 'gmail',   auth: {     user: process.env.EMAIL_USER,     pass: process.env.EMAIL_PASS   } });  // Send email with token async function sendResetEmail(userEmail, token) {   const emailTemplate = await ejs.renderFile(path.join(__dirname, 'emailTemplate.ejs'), { token });      const mailOptions = {     from: process.env.EMAIL_USER,     to: userEmail,     subject: 'Password Reset Request',     html: emailTemplate   };    transporter.sendMail(mailOptions, (error, info) => {     if (error) return console.log(error);     console.log('Email sent: ' + info.response);   }); }
+const nodemailer = require('nodemailer');
+const ejs = require('ejs');
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+// Send email with token
+async function sendResetEmail(userEmail, token) {
+  const emailTemplate = await ejs.renderFile(path.join(__dirname, 'emailTemplate.ejs'), { token });
+  
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: userEmail,
+    subject: 'Password Reset Request',
+    html: emailTemplate
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) return console.log(error);
+    console.log('Email sent: ' + info.response);
+  });
+}
 ```
     
 
