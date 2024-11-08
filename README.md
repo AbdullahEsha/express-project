@@ -85,6 +85,10 @@ npm i ejs nodemailer
 npm i @types/pg @types/bcryptjs @types/cors @types/ejs @types/jsonwebtoken @types/nodemailer
 ```
 
+- Refresh Token[1]: Refresh tokens allow users to stay logged in without repeatedly entering their credentials. When an access token expires, the refresh token can be used to issue a new one, maintaining session security and a smooth user experience.
+
+- GenerateTokens[2]: Created a simple method call generateTokens which takes user data and returns access token and refresh token by the help of JWT.
+
 - Folder structure for for my node project is
 
 ```go
@@ -94,36 +98,32 @@ NODE-PROJECT
 │ ├── config
 │ │ └── database.ts                #database configaration
 │ ├── controllers
-│ │ ├── authController.ts
-│ │ ├── emailVerifyController.ts
-│ │ └── userController.ts
+│ │ ├── authController.ts          #methords @register_user @login_user @social_login @refresh_token[1]
+│ │ ├── emailVerifyController.ts   #methords @resetPassword @resetPasswordUpdate
+│ │ └── userController.ts          #methord @getUsers
 │ ├── helper
-│ │ └── generateTokens.ts
+│ │ └── generateTokens.ts          #check [2]
 │ ├── middleware
-│ │ └── auth.ts
+│ │ └── auth.ts                    #methords @authenticateToken
 │ ├── models
-│ │ └── User.ts
+│ │ └── User.ts                    #user table blueprint
 │ ├── routes
-│ │ ├── authRoutes.ts
-│ │ ├── emailVerifyRoutes.ts
-│ │ └── userRoutes.ts
+│ │ ├── authRoutes.ts              #routes of authController.ts
+│ │ ├── emailVerifyRoutes.ts       #routes of ...
+│ │ └── userRoutes.ts              #routes of ...
 │ ├── templates
-│ │ └── emailTemplate.ejs
+│ │ └── emailTemplate.ejs          #template to show when it is send to email
 │ └── types
 │ └── userType.ts
 ├── .env
 ├── .env.example
 ├── .gitignore
-├── app.ts
-├── index.ts
+├── app.ts                         #all setup like routes, cors before start the server
+├── index.ts                       #start the server in a specific port[5000]
 ├── package-lock.json
 ├── package.json
 └── README.md
 ```
-
-- GenerateTokens: Created a simple method call generateTokens which takes user data and returns access token and refresh token by the help of JWT.
-
-- Refresh Token: Refresh tokens allow users to stay logged in without repeatedly entering their credentials. When an access token expires, the refresh token can be used to issue a new one, maintaining session security and a smooth user experience.
 
 ## Usage (base_url: http://localhost:5000)
 
