@@ -50,6 +50,34 @@ npm install --save-dev @types/express @types/node
 npm i nodemon
 ```
 
+- create .env file and add environment variabls
+
+```bash
+    PORT=5000
+    NODE_ENV=development
+
+    PG_USER=postgres
+    PG_HOST=localhost
+    PG_DATABASE=node_db
+    PG_PASSWORD=password                    # Your password
+    PG_PORT=5432
+
+    JWT_SECRET=secret                       # You can use different secret for access token
+    JWT_REFRESH_SECRET=secret               # You can use different secret for refresh token
+    JWT_EXPIRES_IN=15m
+    JWT_REFRESH_EXPIRES_IN=7d
+
+    CLIENT_URL=http://localhost:3000
+
+    MAIL_MAILER=smtp
+    MAIL_HOST=smtp-relay.brevo.com
+    MAIL_PORT=587
+    MAIL_USERNAME=6c8781002@smtp-brevo.com
+    MAIL_PASSWORD=password                 # Your password
+    MAIL_FROM_NAME=testname                # Your name
+    MAIL_FROM_ADDRESS=example@mail.com     # Your email address
+```
+
 - Modify your package.json file to include TypeScript compilation scripts
 
 ```json
@@ -91,7 +119,7 @@ npm i @types/pg @types/bcryptjs @types/cors @types/ejs @types/jsonwebtoken @type
 
 - Folder structure for for my node project is
 
-```go
+```bash
 NODE-PROJECT
 ├── node_modules
 ├── src
