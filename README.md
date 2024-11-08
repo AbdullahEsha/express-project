@@ -92,7 +92,7 @@ NODE-PROJECT
 ├── node_modules
 ├── src
 │ ├── config
-│ │ └── database.ts
+│ │ └── database.ts                #database configaration
 │ ├── controllers
 │ │ ├── authController.ts
 │ │ ├── emailVerifyController.ts
