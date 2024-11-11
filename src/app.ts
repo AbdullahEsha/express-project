@@ -7,7 +7,12 @@ import emailVerifyRoutes from "./routes/emailVerifyRoutes";
 const app = express();
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:8081",
+      "exp://192.168.0.112:8081",
+    ],
     credentials: true,
   })
 );
