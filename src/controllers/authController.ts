@@ -99,7 +99,11 @@ const login: RequestHandler = async (
       return;
     }
 
-    res.json({ message: "Login successful", accessToken, refreshToken });
+    res.json({
+      message: "Login successful",
+      accessToken,
+      user: userForToken,
+    });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
