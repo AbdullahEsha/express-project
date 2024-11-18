@@ -201,31 +201,49 @@ const refreshToken: RequestHandler = async (
   }
 };
 
-const logout: RequestHandler = async (req: Request, res: Response) => {
-  const accessToken = req.header("Authorization")?.split(" ")[1];
-
-  if (!accessToken) {
-    res.status(401).json({ message: "Access token required" });
-    return;
-  }
+const logout: RequestHandler = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const accessToken = req.header("Authorization")?.split(" ")[1]; // Extract token after "Bearer"
 
   try {
+    if (!accessToken) {
+      res.status(401).json({ message: "Access token required" });
+      return;
+    }
+    // Verify and decode the token
     const payload: any = jwt.verify(
       accessToken,
       process.env.JWT_SECRET as string
     );
-    const user = await User.findByPk(payload.id);
+
+    if (!payload) {
+      res.status(403).json({ message: "Invalid access token" });
+      return;
+    }
+
+    // Find user based on the id in the token payload
+    const user = await User.findByPk(payload.user.id);
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
 
+    // Invalidate the refresh token in the database
     await User.update({ refreshToken: null }, { where: { id: user.id } });
 
     res.json({ message: "Logout successful" });
-  } catch (error) {
-    res.status(403).json({ message: "Invalid access token" });
+  } catch (error: any) {
+    console.error("Token Verification Error:", error);
+
+    if (error.name === "TokenExpiredError") {
+      res.status(401).json({ message: "Token expired" });
+      return;
+    }
+
+    res.status(403).json({ message: "Invalid access token", error });
   }
 };
 

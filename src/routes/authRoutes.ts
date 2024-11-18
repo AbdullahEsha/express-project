@@ -13,6 +13,6 @@ router.post("/register", register);
 router.post("/login", login);
 router.post("/refresh-token", refreshToken);
 router.post("/social-login", socialLogin);
-router.post("/logout", logout);
+router.delete("/logout", logout);
 
 export default router;
